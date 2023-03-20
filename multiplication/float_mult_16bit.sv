@@ -59,7 +59,7 @@ module half_FP_mult (
         guard = mant_multiplied[9];
         round_bit = product[8];
         
-        if(mant_p[0] & guard) begin
+        if(guard) begin
           round_bit = guard;
           guard = mant_p[0];
           mant_p = mant_p + 1;
