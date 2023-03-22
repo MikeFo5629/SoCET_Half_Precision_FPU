@@ -2,8 +2,8 @@
 SystemVerilog implementation of half precision floating point unit
 
 Multiplication: 
-  - Functional for most numbers I've checked by hand.
-  - Needs NaNs, infinities, and sub-normals
+  - Functional for most numbers I've checked by hand (Including infinities, qNans, and sNans).
+  - Needs sub-normals
   - Khoi is writing testbench so that we can finalize module.
 
 Addition: N/A
