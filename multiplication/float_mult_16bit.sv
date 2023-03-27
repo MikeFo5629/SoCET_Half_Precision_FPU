@@ -6,7 +6,7 @@ module half_FP_mult (
   
   logic sign1, sign2, sign_p; 
   logic hidden_lead1, hidden_lead2;
-  logic [4:0] exp1, exp2, exp_p;
+  logic signed [4:0] exp1, exp2, exp_p;
   logic [5:0] exp_comb;
   logic [9:0] mant1, mant2, mant_p;
   
@@ -17,6 +17,7 @@ module half_FP_mult (
     initializing,
     special_case,
     multiply,
+    normalize_exp,
     normalize_mant,
     assemble
   } state_t;
@@ -30,6 +31,7 @@ module half_FP_mult (
       // initializing ->
       // special_case ->
       // multiplying ->
+      // normalize_exp ->
       // normalize_mant ->
       // assemble
       initializing: begin
@@ -80,6 +82,8 @@ module half_FP_mult (
         end
         
         else begin
+          hidden_lead1 = 1'b1;
+          hidden_lead2 = 1'b1;
           next_state = multiply;
         end
       end
@@ -89,7 +93,21 @@ module half_FP_mult (
         exp_p = exp1 + exp2 - 5'd15;
         mant_multiplied = {hidden_lead1, mant1} * {hidden_lead2, mant2};
         
-        next_state = normalize_mant;
+        if(exp_p < 0) begin
+          next_state = normalize_exp;
+          mant_multiplied = mant_multiplied >> 1;
+        end
+        else next_state = normalize_mant;
+      end
+      
+      normalize_exp: begin
+        if(exp_p < 0) begin
+          exp_p = exp_p + 1;
+          mant_multiplied = mant_multiplied >> 1;
+        end
+        else begin
+          next_state = normalize_mant;
+        end
       end
       
       normalize_mant: begin
@@ -108,7 +126,6 @@ module half_FP_mult (
           guard = mant_p[0];
           mant_p = mant_p + 1;
         end
-        // sticky = (product[7:0] != 0);
         
         next_state = assemble;
       end
