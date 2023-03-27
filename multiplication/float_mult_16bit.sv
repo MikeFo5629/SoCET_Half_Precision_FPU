@@ -6,7 +6,12 @@ module half_FP_mult (
   
   logic sign1, sign2, sign_p; 
   logic hidden_lead1, hidden_lead2;
-  logic signed [4:0] exp1, exp2, exp_p;
+  
+  logic signed_exponent;
+  logic [4:0] exp1, exp2; 
+  logic [4:0] exp_p;
+  logic signed [4:0] exp_p_signed;
+  
   logic [5:0] exp_comb;
   logic [9:0] mant1, mant2, mant_p;
   
@@ -41,8 +46,9 @@ module half_FP_mult (
         exp1 =        float1[14:10];
         exp2 =        float2[14:10];
         
-        hidden_lead1 = 1'b0;
-        hidden_lead2 = 1'b0;
+        hidden_lead1 = 1'b1;
+        hidden_lead2 = 1'b1;
+        
         mant1 =       float1[9:0];
         mant2 =       float2[9:0];
         next_state =  special_case;
@@ -82,27 +88,44 @@ module half_FP_mult (
         end
         
         else begin
-          hidden_lead1 = 1'b1;
-          hidden_lead2 = 1'b1;
+          if(exp1 == 0) begin
+            hidden_lead1 = 1'b0;
+          end
+          if(exp2 == 0) begin
+            hidden_lead2 = 1'b0;
+          end
           next_state = multiply;
         end
       end
       
       multiply: begin
         sign_p = sign1 ^ sign2;
-        exp_p = exp1 + exp2 - 5'd15;
+        
+        if((exp1 + exp2) < 15) begin
+          exp_p = 0;
+          exp_p_signed = exp1 + exp2 - 5'd15;
+          signed_exponent = 1'b1;
+        end
+        else begin
+          exp_p = exp1 + exp2 - 5'd15;
+          exp_p_signed = 0;
+          signed_exponent = 1'b0;
+        end
+        
         mant_multiplied = {hidden_lead1, mant1} * {hidden_lead2, mant2};
         
-        if(exp_p < 0) begin
+        if(signed_exponent) begin
           next_state = normalize_exp;
           mant_multiplied = mant_multiplied >> 1;
         end
-        else next_state = normalize_mant;
+        else begin
+          next_state = normalize_mant;
+        end
       end
       
       normalize_exp: begin
-        if(exp_p < 0) begin
-          exp_p = exp_p + 1;
+        if(exp_p_signed < 0) begin
+          exp_p_signed = exp_p_signed + 1;
           mant_multiplied = mant_multiplied >> 1;
         end
         else begin
@@ -132,7 +155,7 @@ module half_FP_mult (
       
       assemble: begin
         product[15] = sign_p;
-        product[14:10] = exp_p;
+        product[14:10] = signed_exponent ? exp_p_signed : exp_p;
         product[9:0] = mant_p;
       end
       
@@ -142,8 +165,12 @@ module half_FP_mult (
         sign2 = 0;
         
         exp_p = 0;
+        exp_p_signed = 0;
         exp1 = 0;
         exp2 = 0;
+        
+        hidden_lead1 = 0;
+        hidden_lead2 = 0;
         
         mant_p = 0;
         mant1 = 0;
