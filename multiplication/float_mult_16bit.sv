@@ -46,11 +46,12 @@ module half_FP_mult (
         exp1 =        float1[14:10];
         exp2 =        float2[14:10];
         
-        hidden_lead1 = 1'b1;
-        hidden_lead2 = 1'b1;
-        
         mant1 =       float1[9:0];
         mant2 =       float2[9:0];
+        
+        hidden_lead1 = 1'b1;
+        hidden_lead2 = 1'b1;
+       
         next_state =  special_case;
       end
       
