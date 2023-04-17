@@ -11,3 +11,9 @@ Addition: N/A
 Subtraction: N/A
 
 Rounding: N/A
+
+TODO:
+  - Move this code into the SOCeT repository
+  - Allow the user to choose the rounding mode
+  - Add inputs which accrues flags
+    - Things like divide by zero, or other exceptions
