@@ -1,7 +1,8 @@
-module half_FP_mult (
-  input clk, rst, 
-  input [15:0] float1, float2,
-  output[15:0] product
+module float_mult_16bit (
+  input logic clk, n_rst, 
+  input logic [15:0] float1, 
+  input logic [15:0] float2,
+  output logic [15:0] product
 );
   
   logic sign1, sign2, sign_p; 
@@ -30,7 +31,7 @@ module half_FP_mult (
   state_t state;
   state_t next_state;
   
-  always_ff @(posedge clk) begin
+  always_comb begin
     case(state)
       // Currently goes
       // initializing ->
@@ -40,18 +41,19 @@ module half_FP_mult (
       // normalize_mant ->
       // assemble
       initializing: begin
-        sign1 =       float1[15];
-        sign2 =       float2[15];
-    
-        exp1 =        float1[14:10];
-        exp2 =        float2[14:10];
-        
-        mant1 =       float1[9:0];
-        mant2 =       float2[9:0];
+        sign1 = float1[15];
+        sign2 = float2[15];
+
+        exp1  = float1[14:10];
+        exp2  = float2[14:10];
         
         hidden_lead1 = 1'b1;
         hidden_lead2 = 1'b1;
-       
+        
+        mant1   = float1[9:0];
+        mant2   = float2[9:0];
+        product = 'd0;
+
         next_state =  special_case;
       end
       
@@ -143,7 +145,7 @@ module half_FP_mult (
         mant_p = mant_multiplied[19:10];
         
         guard = mant_multiplied[9];
-        round_bit = product[8];
+        round_bit = mant_multiplied[8];
         
         if(guard) begin
           round_bit = guard;
@@ -158,6 +160,8 @@ module half_FP_mult (
         product[15] = sign_p;
         product[14:10] = signed_exponent ? exp_p_signed : exp_p;
         product[9:0] = mant_p;
+
+        // if (float1 || float2) next_state = initializing;
       end
       
       default: begin
@@ -181,12 +185,20 @@ module half_FP_mult (
         round_bit = 0;
         sticky = 0;
         mant_multiplied = 0;
+
+        next_state = state;
       end
     endcase
   end
   
-  always_ff @(posedge clk, posedge rst) begin
-    if(rst == 1'b1) begin
+  // always_comb begin
+  //       product[15] = sign_p;
+  //       product[14:10] = signed_exponent ? exp_p_signed : exp_p;
+  //       product[9:0] = mant_p;
+  // end
+
+  always_ff @(posedge clk, negedge n_rst) begin
+    if(!n_rst) begin
       state <= initializing;
     end
     else state <= next_state;
