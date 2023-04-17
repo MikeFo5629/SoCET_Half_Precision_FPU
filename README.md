@@ -13,7 +13,8 @@ Subtraction: N/A
 Rounding: N/A
 
 TODO:
-  - Move this code into the SOCeT repository
+  - RISCV Business repository
+    - Make a folder in there and put this code there
   - Allow the user to choose the rounding mode
   - Add inputs which accrues flags
     - Things like divide by zero, or other exceptions
